@@ -1,0 +1,42 @@
+version: '3.9'
+
+volumes:
+  db-data:
+
+services:
+  db:
+    image: postgres:15.4
+    healthcheck:
+      test: pg_isready --dbname=app --username=postgres 
+      interval: 5s
+      timeout: 5s
+      retries: 2
+      start_period: 10s
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./scripts/initdb:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+  
+  sqlx_migrate:
+    build: 
+      dockerfile: sqlx_migrate.Dockerfile
+      context: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/app
+    depends_on:
+      db:
+        condition: service_healthy
+  
+  app:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/app
+    ports:
+      - 8000:8000
+    depends_on:
+      sqlx_migrate:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy

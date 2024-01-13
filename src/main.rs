@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 use tower_http::trace::{self, TraceLayer};
-use tracing::Level;
+use tracing::{info, Level};
 use uuid::Uuid;
 
 #[derive(Clone)]
@@ -43,7 +43,7 @@ async fn main() -> Result<(), sqlx::Error> {
         );
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
-
+    info!("Listening on port 8000");
     axum::serve(listener, app).await.unwrap();
 
     Ok(())
