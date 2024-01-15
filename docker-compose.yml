@@ -40,3 +40,31 @@ services:
         condition: service_completed_successfully
       db:
         condition: service_healthy
+    logging:
+      driver: fluentd
+      options:
+        fluentd-address: localhost:24224
+
+  fluentbit:
+    image: cr.fluentbit.io/fluent/fluent-bit:2.2.1
+    command: ["/fluent-bit/bin/fluent-bit", "-c", "/fluent-bit/etc/fluent-bit.conf"]
+    ports:
+      - 24224:24224
+    volumes:
+      - ./config/fluent-bit.conf:/fluent-bit/etc/fluent-bit.conf
+      - ./config/fluent-bit-parsers.conf:/fluent-bit/etc/parsers.conf
+    depends_on:
+      - loki
+
+  loki:
+    image: grafana/loki:2.9.0
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./config/loki-config.yaml:/etc/loki/local-config.yaml
+    command: -config.file=/etc/loki/local-config.yaml
+
+  grafana:
+    image: grafana/grafana-oss
+    ports:
+      - 3000:3000
